@@ -1,45 +1,54 @@
 name: Deploy to AKS Cluster
+
 on:
   pull_request:
     branches:
-    - master
+      - master
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
+
     steps:
-    - uses: actions/checkout@master
-    
-    - uses: Azure/docker-login@v1
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Azure Login with OIDC
+      uses: azure/login@v1
+      with:
+        client-id: ${{ secrets.AZURE_CLIENT_ID }}
+        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+    - name: ACR Login (using OIDC-based login session)
+      uses: azure/docker-login@v1
       with:
         login-server: aksgitaction.azurecr.io
-        username: ${{ secrets.ACR_USERNAME }}
-        password: ${{ secrets.ACR_PASSWORD }}
-    
-    - run: |
+
+    - name: Build and Push Docker Image
+      run: |
         docker build . -t aksgitaction.azurecr.io/k8sflask:${{ github.sha }}
         docker push aksgitaction.azurecr.io/k8sflask:${{ github.sha }}
-      
-    # Set the target AKS cluster.
-    - uses: Azure/aks-set-context@v1
+
+    - name: Set AKS Context (OIDC-based)
+      uses: Azure/aks-set-context@v1
       with:
-        creds: '${{ secrets.AZURE_CREDENTIALS }}'
-        cluster-name: AKS-GA
         resource-group: AKS-GitOPS-RG
-        
-    - uses: Azure/k8s-create-secret@v1
+        cluster-name: AKS-GA
+
+    - name: Create image pull secret in Kubernetes
+      uses: Azure/k8s-create-secret@v1
       with:
         container-registry-url: aksgitaction.azurecr.io
-        container-registry-username: ${{ secrets.ACR_USERNAME }}
-        container-registry-password: ${{ secrets.ACR_PASSWORD }}
         secret-name: k8s-secret
 
-    - uses: Azure/k8s-deploy@v1
+    - name: Deploy to AKS
+      uses: Azure/k8s-deploy@v4
       with:
         manifests: |
           manifests/deployment.yaml
           manifests/service.yaml
         images: |
-         aksgitaction.azurecr.io/k8sflask:${{ github.sha }}
+          aksgitaction.azurecr.io/k8sflask:${{ github.sha }}
         imagepullsecrets: |
           k8s-secret
