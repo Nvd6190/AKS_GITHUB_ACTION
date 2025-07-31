@@ -1,12 +1,12 @@
-kind: Service
 apiVersion: v1
+kind: Service
 metadata:
-  name:  flask-svc
+  name: flask-service
 spec:
   selector:
-    app:  flask
-  type:  LoadBalancer
+    app: flask-app
   ports:
-  - name:  http
-    port:  80
-    targetPort: 8080
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
+  type: LoadBalancer
