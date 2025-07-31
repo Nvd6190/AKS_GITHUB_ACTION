@@ -1,18 +1,47 @@
-name: Flask Application
+name: Build and Deploy to AKS
+
 on:
-  pull_request:
+  push:
     branches:
-    - master
+      - main
+
+env:
+  ACR_NAME: aksgitaction
+  IMAGE_NAME: flaskapp
+  IMAGE_TAG: ${{ github.sha }}
+  ACR_LOGIN_SERVER: aksgitaction.azurecr.io
+
 jobs:
-  build:
-    runs-on: ubuntu-16.04
+  deploy:
+    runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@master
-      - name: Set up Python 3.7
-        uses: actions/setup-python@v1
-        with:
-          python-version: 3.7
-      - name: Install Dependencies for the app
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        client-id: ${{ secrets.AZURE_CLIENT_ID }}
+        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+    - name: Docker Build & Push to ACR
+      run: |
+        docker build -t $ACR_LOGIN_SERVER/$IMAGE_NAME:$IMAGE_TAG .
+        docker tag $ACR_LOGIN_SERVER/$IMAGE_NAME:$IMAGE_TAG $ACR_LOGIN_SERVER/$IMAGE_NAME:latest
+        az acr login --name $ACR_NAME
+        docker push $ACR_LOGIN_SERVER/$IMAGE_NAME:$IMAGE_TAG
+        docker push $ACR_LOGIN_SERVER/$IMAGE_NAME:latest
+
+    - name: Set AKS context
+      uses: azure/aks-set-context@v3
+      with:
+        resource-group: AKS-GitOPS-RG
+        cluster-name: AKS-GA
+
+    - name: Deploy to AKS
+      run: |
+        sed "s|<IMAGE>|$ACR_LOGIN_SERVER/$IMAGE_NAME:$IMAGE_TAG|g" deployment.yaml > final-deployment.yaml
+        kubectl apply -f final-deployment.yaml
+        kubectl apply -f service.yaml
