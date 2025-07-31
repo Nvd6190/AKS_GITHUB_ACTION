@@ -46,6 +46,6 @@ jobs:
 
     - name: Deploy to AKS
       run: |
-        sed "s|<IMAGE>|$ACR_LOGIN_SERVER/$IMAGE_NAME:$IMAGE_TAG|g" deployment.yaml > final-deployment.yaml
+        sed "s|<IMAGE>|$ACR_LOGIN_SERVER/$IMAGE_NAME:$IMAGE_TAG|g" app/manifests/deployment.yaml > final-deployment.yaml
         kubectl apply -f final-deployment.yaml
-        kubectl apply -f service.yaml
+        kubectl apply -f app/manifests/service.yaml
