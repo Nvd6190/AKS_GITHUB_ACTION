@@ -5,8 +5,8 @@ FROM python:3.10-slim
 WORKDIR /app
 
 # Copy application code
-COPY appy.py .
-COPY templates ./templates
+COPY app/appy.py .
+COPY app/templates ./templates
 
 # Install Flask
 RUN pip install flask
