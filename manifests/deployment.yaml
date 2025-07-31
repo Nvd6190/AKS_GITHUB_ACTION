@@ -14,6 +14,6 @@ spec:
     spec:
       containers:
       - name: flask-container
-        image: aksgitaction.azurecr.io/k8sflask  
+        image: aksgitaction.azurecr.io/flaskapp  
         ports:
         - containerPort: 8080   
