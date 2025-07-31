@@ -27,8 +27,8 @@ jobs:
         password: ${{ secrets.ACR_PASSWORD }}
     
     - run: |
-        docker build . -t aksgitaction.azurecr.io/k8sflask:${{ github.sha }}
-        docker push aksgitaction.azurecr.io/k8sflask:${{ github.sha }}
+        docker build . -t aksgitaction.azurecr.io/flaskapp:${{ github.sha }}
+        docker push aksgitaction.azurecr.io/flaskapp:${{ github.sha }}
       
     # Set the target AKS cluster.
     - uses: Azure/aks-set-context@v1
