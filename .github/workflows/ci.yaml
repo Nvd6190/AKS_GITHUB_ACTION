@@ -5,6 +5,10 @@ on:
     branches:
       - main
 
+permissions:
+  id-token: write
+  contents: read
+
 env:
   ACR_NAME: aksgitaction
   IMAGE_NAME: flaskapp
@@ -38,7 +42,7 @@ jobs:
       uses: azure/aks-set-context@v3
       with:
         resource-group: AKS-GitOPS-RG
-        cluster-name: AKS-GA
+        cluster-name: AKS-GitOPS-RG
 
     - name: Deploy to AKS
       run: |
