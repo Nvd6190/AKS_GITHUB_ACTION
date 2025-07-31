@@ -42,7 +42,7 @@ jobs:
       uses: azure/aks-set-context@v3
       with:
         resource-group: AKS-GitOPS-RG
-        cluster-name: AKS-GitOPS-RG
+        cluster-name: AKS-GA
 
     - name: Deploy to AKS
       run: |
